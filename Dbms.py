@@ -54,6 +54,9 @@ pwd.place(x=645,y=410)
 login = CTkButton(root,text='Login',command=lambda:log())
 login.place(x=680,y=500)
 def log():
+        '''cursor.execute('select * from Users')
+        result = cursor.fetchall()'''
+        debit = 'Call debit(120,808823776,"Sanath") '
     #if username.get() in ['Sanath'] and pwd.get() in ['san']:
         confirm = messagebox.askyesno("Confirm","Are u sure")
         if confirm==True:
@@ -95,17 +98,17 @@ def log():
 
                 tree = ttk.Treeview(top2)
                 tree['show']='headings'
-                tree['columns'] = ("User Id","Income","Type","Date","Account Id")
+                tree['columns'] = ("Sl","Amount","Type","Date","Account Id")
                 tree.column('#0',width=0,minwidth=20)
-                tree.column('User Id',width=120,minwidth=100)
-                tree.column('Income',width=120,minwidth=100)
+                tree.column('Sl',width=120,minwidth=100)
+                tree.column('Amount',width=120,minwidth=100)
                 tree.column('Type',width=120,minwidth=100)
                 tree.column('Date',width=120,minwidth=100)
                 tree.column('Account Id',width=120,minwidth=100)
 
                 tree.heading('#0',text='',anchor=W)
-                tree.heading('User Id',text='User Id',anchor=W)
-                tree.heading('Income',text='Income',anchor=W)
+                tree.heading('Sl',text='Sl No',anchor=W)
+                tree.heading('Amount',text='Amount',anchor=W)
                 tree.heading('Type',text='Type',anchor=W)
                 tree.heading('Date',text='Date',anchor=W)
                 tree.heading('Account Id',text='Account Id',anchor=W)
@@ -143,38 +146,139 @@ def log():
                 top3.geometry("500x500")
                 new1.attributes('-topmost', False)
                 top3.attributes('-topmost',True)
+                top3.resizable(False,False)
+                mycon = sqltor.connect(host = "localhost", user = "root",passwd = "tiger",database = 'dbms')
+                if mycon.is_connected() == False:
+                    print("Database couldnt be connected")
+                cursor = mycon.cursor()
 
-                name_entry = CTkEntry(top3,width=200)
-                name_entry.pack()
-                inc_entry = CTkEntry(top3,width=200)
-                inc_entry.pack()
-                type_entry = CTkEntry(top3,width=200)
-                type_entry.pack()
+                tabview = CTkTabview(master=top3,width = 200)
+                tabview.pack(padx=30, pady=20)
+
+                spent_tab = tabview.add("     Spent     ")
+                rec_tab = tabview.add(" Recieved ")
+
+                #For spending tab
+                name_label1 = CTkLabel(spent_tab,text="Name:")
+                name_label1.pack()
+                name_entry1 = CTkEntry(spent_tab,width=200)
+                name_entry1.pack(padx=20, pady=7)
+                            
+                amt_label1 = CTkLabel(spent_tab,text="Amount:")
+                amt_label1.pack()
+                amt_entry1 = CTkEntry(spent_tab,width=200)
+                amt_entry1.pack(padx=20, pady=7)
+
+                category_label1 = CTkLabel(spent_tab,text="Category:")
+                category_label1.pack()
+                category_entry1 = CTkEntry(spent_tab,width=200)
+                category_entry1.pack(padx=20, pady=7)
+
+                date_label1 = CTkLabel(spent_tab,text="Date:")
+                date_label1.pack()
+                date_entry1 = CTkEntry(spent_tab,width=200)
+                date_entry1.pack(padx=20, pady=7)
+
+                #For recieved money tab
+                amt_label2 = CTkLabel(rec_tab,text="Amount:")
+                amt_label2.pack()
+                amt_entry2 = CTkEntry(rec_tab,width=200)
+                amt_entry2.pack(padx=20, pady=10)
+
+                '''category_label2 = CTkLabel(rec_tab,text="Category:")
+                category_label2.pack()
+                category_entry2 = CTkEntry(rec_tab,width=200)
+                category_entry2.pack(padx=20, pady=10)'''
+
+                date_label2 = CTkLabel(rec_tab,text="Date:")
+                date_label2.pack()
+                date_entry2 = CTkEntry(rec_tab,width=200)
+                date_entry2.pack(padx=20, pady=10)
+                i=0
+                def add_button1():
+                    global i
+                    i=i+1
+                    if spent_tab:
+                        amt1 = amt_entry1.get()
+                        name1 = name_entry1.get()
+                        cate1 = category_entry1.get()
+                        date1 = date_entry1.get()
+
+                        if not amt1 and not name1  and not cate1  and not date1 :
+                            errors = messagebox.showerror("Error","Please fill all the tables!")
+                            return
+
+                        insert1 = "insert into expenses(Name,Amount,Category,UserID,Date) values('{}',{},'{}','{}','{}')".format(name1,amt1,cate1,'Sanath',date1)
+                        cursor.execute(insert1)
+                        mycon.commit()
+
+                        tup1 = (i,amt1,date1)
+                        q1 = """Call transactiondeb(%s,%s,%s);"""
+                        cursor.execute(q1,tup1)
+                        mycon.commit()
+                        
+                        debit = """Call debit(%s,'Sanath')"""
+                        tuple1 = (amt1,)
+                        cursor.execute(debit,tuple1)
+                        mycon.commit()
+                        successful1 = messagebox.showinfo("Congrats!", "Transaction Added Successfully")
+
+                def add_button2():
+                    global i
+                    i=i+1
+                    if rec_tab:
+                        amt2 = amt_entry2.get()
+                        date2 = date_entry2.get()
+                        if not amt2 and not date2 :
+                            errors = messagebox.showerror("Error","Please fill all the tables!")
+                            return
+                        
+                        insert2 = "insert into income(Amount,UserID,Date) values({},'{}','{}')".format(amt2,'Sanath',date2)
+                        cursor.execute(insert2)
+                        mycon.commit()
+
+                        
+                        tup2 = (i,amt2,date2)
+                        q2 = """Call transactioncred(%s,%s,%s);"""
+                        cursor.execute(q2,tup2)
+                        mycon.commit()
+                        
+                        credit = """Call credit(%s,'Sanath')"""
+                        tuple2 = (amt2,)
+                        cursor.execute(credit,tuple2)
+                        mycon.commit()
+                        successful2 = messagebox.showinfo("Congrats!", "Transaction Added Successfully")
+
+                        add_button1 = CTkButton(spent_tab,text = "Add",height=30,width=200,command=add_button1)
+                        add_button1.pack(pady=40)
+
+                        add_button2 = CTkButton(rec_tab,text = "Add",width=200,command=add_button2)
+                        add_button2.pack(pady=40)
 
             
-            exp_but = CTkButton(frame1,font=my_font,text = "Expenses",width=180,height=35,command = log)
-            exp_but.place(x=20,y=270)
+                        exp_but = CTkButton(frame1,font=my_font,text = "Spend Analytics",width=180,height=35,command = log)
+                        exp_but.place(x=20,y=270)
 
-            bal_but = CTkButton(frame1,font=my_font,text = "Balance",width=180,height=35,command = balance)
-            bal_but.place(x=20,y=350)
+                        expenses_but = CTkButton(frame1,font=my_font,text = "Expenses",width=180,height=35,command = balance)
+                        expenses_but.place(x=20,y=350)
 
-            acc_but = CTkButton(frame1,font=my_font,text = "Accounts",width=180,height=35,command = account)
-            acc_but.place(x=20,y=430)
+                        acc_but = CTkButton(frame1,font=my_font,text = "Accounts",width=180,height=35,command = account)
+                        acc_but.place(x=20,y=430)
 
-            add_but = CTkButton(frame1,font=my_font,text = "Add+",width=70,height=60,corner_radius=100,command = add)
-            add_but.place(x=60,y=700)
+                        add_but = CTkButton(frame1,font=my_font,text = "Add+",width=70,height=60,corner_radius=100,command = add)
+                        add_but.place(x=60,y=700)
 
-            var1 = StringVar(value = "Monthly expense")
-            var2 = StringVar(value = "Graph")
-            combobox1 = CTkOptionMenu(new1,values=["Monthly expense", "Yearly expense"],variable=var1)
-            combobox1.place(x=1380, y=350)
+                        var1 = StringVar(value = "Monthly expense")
+                        var2 = StringVar(value = "Graph")
+                        combobox1 = CTkOptionMenu(new1,values=["Monthly expense", "Yearly expense"],variable=var1)
+                        combobox1.place(x=1380, y=350)
 
-            combobox2 = CTkOptionMenu(new1,values=["Graph", "Pie-Chart"],variable=var2)
-            combobox2.place(x=1380, y=400)
+                        combobox2 = CTkOptionMenu(new1,values=["Graph", "Pie-Chart"],variable=var2)
+                        combobox2.place(x=1380, y=400)
 
 
         
-        style.use("grayscale")
+'''style.use("grayscale")
         # the figure that will contain the plot
         fig = Figure(figsize = (6, 6),dpi = 100)
         
@@ -197,22 +301,23 @@ def log():
         # placing the canvas on the Tkinter window
         canvas.get_tk_widget().pack()
         
-        '''    # creating the Matplotlib toolbar
+            # creating the Matplotlib toolbar
         toolbar = NavigationToolbar2Tk(canvas,
                                         new1)
-        toolbar.update()'''
+        toolbar.update()
         
             # placing the toolbar on the Tkinter window
         canvas.get_tk_widget().place(x=700,y=300)
         plt.show()
         
       
-'''else:
+    else:
         confirm = messagebox.showerror("Error","Wrong Password try again")
         username.delete(0,END)
-        pwd.delete(0,END)'''
+        pwd.delete(0,END)
+    '''
 
 
 
-
+mycon.close()
 root.mainloop()
