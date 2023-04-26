@@ -10,12 +10,13 @@ matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib import style
 from matplotlib.figure import Figure
+from ttkthemes import ThemedTk
 
 root = CTk()
 root.geometry("1280x800")
 root.title("Fine management system")
 global top2
-
+j=0
 #Link to database
 mycon = sqltor.connect(host = "localhost", user = "root",passwd = "tiger",database = 'dbms')
 if mycon.is_connected() == False:
@@ -53,13 +54,15 @@ pwd.configure(show="*")
 pwd.place(x=645,y=410)
 login = CTkButton(root,text='Login',command=lambda:log())
 login.place(x=680,y=500)
+
 def log():
-        '''cursor.execute('select * from Users')
-        result = cursor.fetchall()'''
-        debit = 'Call debit(120,808823776,"Sanath") '
+        #cursor.execute("select * from transactions")
+        #result = cursor.fetchall()
+    
     #if username.get() in ['Sanath'] and pwd.get() in ['san']:
         confirm = messagebox.askyesno("Confirm","Are u sure")
         if confirm==True:
+            root.withdraw()
             new1 = CTkToplevel()
             new1.attributes('-topmost', True)
             new1.title("Fine management system")
@@ -82,8 +85,11 @@ def log():
             Exp_button = CTkButton(frame2,text="Spend Analytics",width = 200,height = 35)
             Exp_button.place(x=500,y=25)
             
-            def balance():
-                
+            def transaction():
+                mycon = sqltor.connect(host = "localhost", user = "root",passwd = "tiger",database = 'dbms')
+                if mycon.is_connected() == False:
+                    print("Database couldnt be connected")
+                cursor = mycon.cursor()
                 top2 = CTkToplevel()
                 top2.title(" ")
                 new1.attributes('-topmost', False)
@@ -94,32 +100,31 @@ def log():
                 
                 s = ttk.Style(top2)
                 s.theme_use("clam")
-                #cursor.execute('select * from student')
+                
+                cursor.execute("select * from transactions")
+                #mycon.commit()
 
                 tree = ttk.Treeview(top2)
                 tree['show']='headings'
-                tree['columns'] = ("Sl","Amount","Type","Date","Account Id")
+                tree['columns'] = ("Sl","Amount","Type","Date")
                 tree.column('#0',width=0,minwidth=20)
-                tree.column('Sl',width=120,minwidth=100)
-                tree.column('Amount',width=120,minwidth=100)
-                tree.column('Type',width=120,minwidth=100)
-                tree.column('Date',width=120,minwidth=100)
-                tree.column('Account Id',width=120,minwidth=100)
+                tree.column('Sl',width=150,minwidth=100)
+                tree.column('Amount',width=150,minwidth=100)
+                tree.column('Type',width=150,minwidth=100)
+                tree.column('Date',width=150,minwidth=100)
 
                 tree.heading('#0',text='',anchor=W)
                 tree.heading('Sl',text='Sl No',anchor=W)
                 tree.heading('Amount',text='Amount',anchor=W)
                 tree.heading('Type',text='Type',anchor=W)
                 tree.heading('Date',text='Date',anchor=W)
-                tree.heading('Account Id',text='Account Id',anchor=W)
 
                 scroll = CTkScrollbar(top2,orientation="vertical")
                 scroll.configure(command=tree.yview)
                 tree.configure(yscrollcommand=scroll.set)
                 scroll.pack(ipady=150,side = RIGHT)
-                tree.place(x=70,y=100)
-                tree.insert(parent='',index='end',iid=0,text='',values=(1,1000,'Credit','Tuesday',112390))
-                tree.insert(parent='',index='end',iid=1,text='',values=(2,2000,'Debit','Wednesday',122490))
+
+                tree.pack(padx = 20,pady =20)
                 def remove():
                     x = tree.selection()
                     for record in x:
@@ -127,20 +132,18 @@ def log():
                     print(x)
                     
                 delete_but = CTkButton(top2,text = "Delete",command = remove)
-                delete_but.place(x=545,y=200)
+                delete_but.pack(pady=20)
 
-                '''i=1
+                i=1
                 for ro in cursor:
-                    tree.insert('',i,text='',values=(i,ro[0],ro[1],ro[2],ro[3]))
-                    i=i+1'''
-
-
+                    tree.insert('',i,text='',values=(i,ro[0],ro[1],ro[2]))
+                    i=i+1
+            
             def account():
                 global top1
                 top1 = CTkToplevel()
                 top1.title("Fine Management System")
             def add():
-                global top3
                 top3 = CTkToplevel()
                 top3.title("Add Transaction+")
                 top3.geometry("500x500")
@@ -194,10 +197,9 @@ def log():
                 date_label2.pack()
                 date_entry2 = CTkEntry(rec_tab,width=200)
                 date_entry2.pack(padx=20, pady=10)
-                i=0
                 def add_button1():
-                    global i
-                    i=i+1
+                    global j
+                    j=j+1
                     if spent_tab:
                         amt1 = amt_entry1.get()
                         name1 = name_entry1.get()
@@ -205,14 +207,14 @@ def log():
                         date1 = date_entry1.get()
 
                         if not amt1 and not name1  and not cate1  and not date1 :
-                            errors = messagebox.showerror("Error","Please fill all the tables!")
+                            errors = messagebox.showerror("Error","Please fill all the tables!",parent = spent_tab)
                             return
 
                         insert1 = "insert into expenses(Name,Amount,Category,UserID,Date) values('{}',{},'{}','{}','{}')".format(name1,amt1,cate1,'Sanath',date1)
                         cursor.execute(insert1)
                         mycon.commit()
 
-                        tup1 = (i,amt1,date1)
+                        tup1 = (j,amt1,date1)
                         q1 = """Call transactiondeb(%s,%s,%s);"""
                         cursor.execute(q1,tup1)
                         mycon.commit()
@@ -221,16 +223,17 @@ def log():
                         tuple1 = (amt1,)
                         cursor.execute(debit,tuple1)
                         mycon.commit()
-                        successful1 = messagebox.showinfo("Congrats!", "Transaction Added Successfully")
+                        successful1 = messagebox.showinfo("Congrats!", "Transaction Added Successfully",parent = spent_tab)
+
 
                 def add_button2():
-                    global i
-                    i=i+1
+                    global j
+                    j=j+1
                     if rec_tab:
                         amt2 = amt_entry2.get()
                         date2 = date_entry2.get()
                         if not amt2 and not date2 :
-                            errors = messagebox.showerror("Error","Please fill all the tables!")
+                            messagebox.showerror("Error","Please fill all the tables!",parent = rec_tab)
                             return
                         
                         insert2 = "insert into income(Amount,UserID,Date) values({},'{}','{}')".format(amt2,'Sanath',date2)
@@ -238,7 +241,7 @@ def log():
                         mycon.commit()
 
                         
-                        tup2 = (i,amt2,date2)
+                        tup2 = (j,amt2,date2)
                         q2 = """Call transactioncred(%s,%s,%s);"""
                         cursor.execute(q2,tup2)
                         mycon.commit()
@@ -247,34 +250,34 @@ def log():
                         tuple2 = (amt2,)
                         cursor.execute(credit,tuple2)
                         mycon.commit()
-                        successful2 = messagebox.showinfo("Congrats!", "Transaction Added Successfully")
+                        successful2 = messagebox.showinfo("Congrats!", "Transaction Added Successfully",parent = rec_tab)
 
-                        add_button1 = CTkButton(spent_tab,text = "Add",height=30,width=200,command=add_button1)
-                        add_button1.pack(pady=40)
+                add_button1 = CTkButton(spent_tab,text = "Add",height=30,width=200,command=add_button1)
+                add_button1.pack(pady=40)
 
-                        add_button2 = CTkButton(rec_tab,text = "Add",width=200,command=add_button2)
-                        add_button2.pack(pady=40)
+                add_button2 = CTkButton(rec_tab,text = "Add",width=200,command=add_button2)
+                add_button2.pack(pady=40)
 
             
-                        exp_but = CTkButton(frame1,font=my_font,text = "Spend Analytics",width=180,height=35,command = log)
-                        exp_but.place(x=20,y=270)
+            exp_but = CTkButton(frame1,font=my_font,text = "Spend Analytics",width=180,height=35,command = log)
+            exp_but.place(x=20,y=270)
 
-                        expenses_but = CTkButton(frame1,font=my_font,text = "Expenses",width=180,height=35,command = balance)
-                        expenses_but.place(x=20,y=350)
+            expenses_but = CTkButton(frame1,font=my_font,text = "Expenses",width=180,height=35,command = transaction)
+            expenses_but.place(x=20,y=350)
 
-                        acc_but = CTkButton(frame1,font=my_font,text = "Accounts",width=180,height=35,command = account)
-                        acc_but.place(x=20,y=430)
+            acc_but = CTkButton(frame1,font=my_font,text = "Accounts",width=180,height=35,command = account)
+            acc_but.place(x=20,y=430)
 
-                        add_but = CTkButton(frame1,font=my_font,text = "Add+",width=70,height=60,corner_radius=100,command = add)
-                        add_but.place(x=60,y=700)
+            add_but = CTkButton(frame1,font=my_font,text = "Add+",width=70,height=60,corner_radius=100,command = add)
+            add_but.place(x=60,y=700)
 
-                        var1 = StringVar(value = "Monthly expense")
-                        var2 = StringVar(value = "Graph")
-                        combobox1 = CTkOptionMenu(new1,values=["Monthly expense", "Yearly expense"],variable=var1)
-                        combobox1.place(x=1380, y=350)
+            var1 = StringVar(value = "Monthly expense")
+            var2 = StringVar(value = "Graph")
+            combobox1 = CTkOptionMenu(new1,values=["Monthly expense", "Yearly expense"],variable=var1)
+            combobox1.place(x=1380, y=350)
 
-                        combobox2 = CTkOptionMenu(new1,values=["Graph", "Pie-Chart"],variable=var2)
-                        combobox2.place(x=1380, y=400)
+            combobox2 = CTkOptionMenu(new1,values=["Graph", "Pie-Chart"],variable=var2)
+            combobox2.place(x=1380, y=400)
 
 
         
